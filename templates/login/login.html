@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title><!DOCTYPE html>
+        <html>
+        <head>
+        <meta charset="utf-8">
+        <title>Login</title>
+    <link rel="stylesheet" href="/static/css/loginstyle.css">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.1/css/all.css">
+</head>
+<body>
+<div id="loginContents">
+    <div id="loginContent">
+        <div id="loginIntroduce">
+            <div id="loginSpans">
+                <span id="loginIntroSpan_1">Polaris</span>
+                <span id="loginIntroSpan_2">Crypto Trader</span>
+            </div>
+            <div class="login">
+                <h1>Login</h1>
+                {% if error %}
+                <p style="color: red;">{{ error }}</p>
+                {% endif %}
+                <form action="/login" method="post">
+                    <label for="userid">
+                        <i class="fas fa-user"></i>
+                    </label>
+                    <input type="text" name="userid" placeholder="Username" id="userid" required>
+                    <label for="password">
+                        <i class="fas fa-lock"></i>
+                    </label>
+                    <input type="password" name="password" placeholder="Password" id="password" required>
+                    <input type="submit" value="Login">
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html></title>
+</head>
+<body>
+
+</body>
+</html>
