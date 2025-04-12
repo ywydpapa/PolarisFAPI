@@ -43,7 +43,7 @@ async def get_db():
         yield session
 
 
-async def set_skey(userno: int, skey:str,  db: AsyncSession):
+async def set_skey(userno: int, skey:str, db: AsyncSession):
     try:
         rightnow =datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         query = text("UPDATE polarisUser set sKey = :skey, lastLogin = :logtm where userNo = :userno")
@@ -54,7 +54,7 @@ async def set_skey(userno: int, skey:str,  db: AsyncSession):
         raise HTTPException(status_code=500, detail="Database query failed(SetKey Process)")
 
 
-async def check_session(userno: int, skey: str, db: AsyncSession):
+async def check_session(userno: int, skey: str,db: AsyncSession):
     try:
         rightnow =datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         query = text("SELECT lastLogin FROM polarisUser WHERE userNo = :userno AND sKey = :skey")
@@ -68,6 +68,24 @@ async def check_session(userno: int, skey: str, db: AsyncSession):
         raise HTTPException(status_code=500, detail="Database query failed(CheckSession Process)")
 
 
+async def checkwallet(userno: int,db: AsyncSession):
+    try:
+        walletitems = []
+        query = text("SELECT apiKey1, apiKey2 FROM polarisKeys WHERE userNo=:uno AND attrib NOT LIKE :att")
+        mykeys = await db.execute(query, {"uno": userno, "att": '%XXX'})  # setkey 제거
+        keys = mykeys.fetchone()
+        if not keys:
+            print("No available Keys !!")
+        else:
+            key1 = keys[0]
+            key2 = keys[1]
+            upbit = pyupbit.Upbit(key1, key2)
+            walletitems = upbit.get_balances()
+        return walletitems
+    except Exception as e:
+        print(f"Wallet Check Error: {e}")
+        return []
+
 def format_currency(value):
     if isinstance(value, (int, float)):
         return "₩{:,.0f}".format(value)
@@ -78,7 +96,7 @@ templates.env.filters['currency'] = format_currency
 @app.get("/", response_class=HTMLResponse)
 async def login_form(request: Request):
     if request.session.get("user_sKey"):
-        return RedirectResponse(url="member/dashboardmain.html", status_code=303)
+        return RedirectResponse(url="/logincheck", status_code=303)
     return templates.TemplateResponse("login/login.html", {"request": request})
 
 
@@ -103,12 +121,16 @@ async def success_page(request: Request):
     user_Name = request.session.get("user_Name")
     user_Role = request.session.get("user_Role")
     user_sKey = request.session.get("user_sKey")
-    if not user_No:
-        error_message = " 세션이 만료되어 로그인이 필요합니다. 다시 시도해 주세요."
+    if user_sKey:
+        return templates.TemplateResponse("member/dashboardmain.html", {"request": request, "user_No": user_No, "user_Name": user_Name,"user_Role": user_Role, "user_sKey": user_sKey})
+    else:
+        error_message = " 세션이 만료되어 다시 로그인이 필요합니다."
         return templates.TemplateResponse("login/login.html", {"request": request, "error": error_message})
-    return templates.TemplateResponse("member/dashboardmain.html",
-                                      {"request": request, "user_No": user_No, "user_Name": user_Name,
-                                       "user_Role": user_Role, "user_sKey": user_sKey})
+
+@app.get("/mywallet/{userno}", response_class=HTMLResponse)
+async def mywallet(request:Request, userno: int, db: AsyncSession = Depends(get_db)):
+    walletcont = await checkwallet(userno,db)
+    return templates.TemplateResponse("member/mywallet.html", {"request": request, "user_No": userno, "witems": walletcont})
 
 
 @app.get("/logout")
