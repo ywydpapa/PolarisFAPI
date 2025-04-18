@@ -12,6 +12,7 @@ from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from sqlalchemy import text
 import dotenv
+import json
 from datetime import datetime
 import os
 import pyupbit
@@ -53,6 +54,35 @@ async def checkwallet(userno: int,db: AsyncSession):
                     curr = [wallet['currency'], cpr]
                     mycoins.append(curr)
         return walletitems, mycoins
+    except Exception as e:
+        print(f"Wallet Check Error: {e}")
+        return []
+
+
+async def app_checkwallet(userno: int,db: AsyncSession):
+    try:
+        walletitems = []
+        query = text("SELECT apiKey1, apiKey2 FROM polarisKeys WHERE userNo=:uno AND attrib NOT LIKE :att")
+        mykeys = await db.execute(query, {"uno": userno, "att": '%XXX'})  # setkey 제거
+        keys = mykeys.fetchone()
+        if not keys:
+            print("No available Keys !!")
+        else:
+            key1 = keys[0]
+            key2 = keys[1]
+            upbit = pyupbit.Upbit(key1, key2)
+            walletitems = upbit.get_balances()
+            for wallet in walletitems:
+                if wallet['currency'] != "KRW":
+                    ccoin = "KRW-" + wallet['currency']
+                    try:
+                        cpr = pyupbit.get_current_price(ccoin)
+                    except Exception as e:
+                        cpr = 1
+                    wallet['curprice'] = cpr
+                else:
+                    wallet['curprice'] = 1
+        return json.dumps(walletitems)
     except Exception as e:
         print(f"Wallet Check Error: {e}")
         return []

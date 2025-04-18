@@ -153,6 +153,27 @@
         }
     }
 
+
+    function buycoin(uno, coinn) {
+        if (confirm("본 코인을 시장가로 매수하시겠습니까?")) {
+            let rate = $("#buyamt option:selected").val();
+            data = [uno, coinn, rate]
+            console.log(data);
+            $.ajax({
+                type: "POST",
+                url: '/buycoin',
+                data: data,
+                processData: false,
+                contentType: false,
+                success: (res) => {
+                    console.log(res);
+                    location.reload();
+                }
+            });
+        } else {
+        }
+    }
+
     function numberWithCommas(x) {
         return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
     }

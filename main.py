@@ -106,6 +106,13 @@ async def mywallet(request:Request, userno: int, db: AsyncSession = Depends(get_
     return templates.TemplateResponse("member/mywallet.html", {"request": request, "user_No": userno, "witems": walletcont[0], "mycoins": walletcont[1]})
 
 
+@app.get("/phapp/mywallet/{userno}", response_class=HTMLResponse)
+async def mywallet(request:Request, userno: int, db: AsyncSession = Depends(get_db)):
+    walletconts = await app_checkwallet(userno,db)
+    return walletconts
+
+
+
 @app.get("/logout")
 async def logout(request: Request):
     request.session.clear()
