@@ -30,6 +30,21 @@ async def set_skey(userno: int, skey:str, db: AsyncSession):
         raise HTTPException(status_code=500, detail="Database query failed(SetKey Process)")
 
 
+async def get_key(userno:int, skey:str, db: AsyncSession):
+    try:
+        query = text("SELECT apiKey1, apiKey2 FROM polarisKeys WHERE userNo=:uno AND attrib NOT LIKE :att")
+        mykeys = await db.execute(query, {"uno": userno, "att": '%XXX'})  # setkey 제거
+        keys = mykeys.fetchone()
+        if not keys:
+            print("No available Keys !!")
+        else:
+            key1 = keys[0]
+            key2 = keys[1]
+        return key1, key2
+    except:
+        raise HTTPException(status_code=500, detail="Database query failed(GetKey Process)")
+
+
 async def checkwallet(userno: int,db: AsyncSession):
     try:
         walletitems = []
